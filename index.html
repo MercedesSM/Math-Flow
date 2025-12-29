@@ -51,7 +51,6 @@
 
         h1 { font-weight: 800; font-size: 2.5rem; margin-bottom: 0.5rem; letter-spacing: -1px; }
         
-        /* Improved Instructions */
         .instructions { 
             color: #636e72; 
             margin-bottom: 2rem; 
@@ -111,24 +110,30 @@
             cursor: pointer;
         }
 
+        /* --- UPDATED TIMER CSS --- */
         .timer-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 8px;
+            height: 16px; /* BIGGER */
             background: #f1f2f6;
             z-index: 50;
+            transition: background-color 0.3s;
         }
+        
+        /* The RED state when time is up */
+        .timer-container.overtime {
+            background-color: var(--c-sub) !important;
+        }
+
         #timer-bar {
             height: 100%;
             width: 100%;
             background: var(--text-main);
             transform-origin: left;
-            transition: transform 1s linear, background-color 0.3s;
+            transition: transform 1s linear;
         }
-        /* Overtime Color */
-        #timer-bar.overtime { background-color: var(--c-sub) !important; }
 
         .carousel-wrapper {
             flex-grow: 1;
@@ -194,14 +199,13 @@
         .t-word  { color: var(--c-word);  border-color: var(--c-word); }
         .t-pow   { color: var(--c-pow);   border-color: var(--c-pow); }
         
-        /* Input Area */
         .input-container {
             width: 100%;
             padding: 15px 20px 20px 20px;
             background: var(--bg-color);
             z-index: 60;
             display: flex;
-            flex-direction: column; /* Column to hold input and give up btn */
+            flex-direction: column;
             align-items: center;
             gap: 10px;
             border-top: 1px solid #f1f2f6;
@@ -230,7 +234,6 @@
         }
         input:focus { border-color: var(--text-main); background: #fff; }
         
-        /* Shake Animation */
         .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
@@ -260,7 +263,6 @@
             padding: 5px;
         }
 
-        /* Results Screen Styling */
         .stat-number { font-size: 3rem; font-weight: 800; margin: 10px 0; }
         
         #breakdown-container {
@@ -282,10 +284,6 @@
             font-size: 0.9rem;
             color: #636e72;
         }
-        .breakdown-row.total {
-            color: var(--text-main);
-            font-weight: bold;
-        }
         .breakdown-op { font-weight: bold; }
 
         @media (max-height: 500px) {
@@ -306,6 +304,7 @@
             2. <strong>Swipe Left</strong> to reveal the next operation.<br>
             3. Keep the running total in your head.<br>
             4. Enter the final number at the end.<br>
+            <em>Tip: Use the peek at the edges to prepare!</em>
         </div>
         <button class="btn" onclick="Game.init('daily')">Daily Challenge</button>
         <button class="btn btn-outline" onclick="Nav.to('screen-practice')">Practice Mode</button>
@@ -352,7 +351,6 @@
 
 <script>
 
-/* --- MATH ENGINE --- */
 const MathEngine = {
     concepts: {
         'halving': ['half', 'perc50', 'div2'],
@@ -401,7 +399,6 @@ const MathEngine = {
 
     generate(rng, difficulty) {
         let current = Math.floor(rng() * 20) + 10; 
-        // We track the running total in the sequence for the breakdown view
         let sequence = [{ txt: current, color: 't-start', type: 'start', total: current }];
         
         let bannedConcepts = new Set();
@@ -449,7 +446,7 @@ const MathEngine = {
                         txt: result.txt, 
                         color: result.color,
                         long: result.txt.length > 8,
-                        total: current // STORE THE ANSWER FOR THIS STEP
+                        total: current 
                     });
                     
                     if (result.cat) bannedConcepts.add(result.cat);
@@ -469,7 +466,6 @@ const MathEngine = {
     }
 };
 
-/* --- APP LOGIC --- */
 const Nav = {
     to(id) {
         document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
@@ -520,10 +516,11 @@ const Game = {
 
     clearTimer() {
         if(this.redTimerTimeout) clearTimeout(this.redTimerTimeout);
+        const barContainer = document.querySelector('.timer-container');
         const bar = document.getElementById('timer-bar');
         bar.style.transition = 'none';
         bar.style.transform = 'scaleX(1)';
-        bar.classList.remove('overtime');
+        barContainer.classList.remove('overtime');
     },
 
     createSeeder(str) {
@@ -578,18 +575,18 @@ const Game = {
 
     startTimer() {
         this.clearTimer();
+        const barContainer = document.querySelector('.timer-container');
         const bar = document.getElementById('timer-bar');
+        
         void bar.offsetWidth; // force reflow
         
-        // Start animation
         setTimeout(() => {
             bar.style.transition = 'transform 30s linear';
             bar.style.transform = 'scaleX(0)';
         }, 50);
 
-        // Schedule Red Color at exactly 30s
         this.redTimerTimeout = setTimeout(() => {
-            bar.classList.add('overtime');
+            barContainer.classList.add('overtime');
         }, 30050);
 
         this.startTime = Date.now();
@@ -605,7 +602,6 @@ const Game = {
             this.endGame(true, false);
         } else {
             this.attempts++;
-            // Shake effect
             inputEl.classList.remove('shake');
             void inputEl.offsetWidth; // force reflow
             inputEl.classList.add('shake');
@@ -626,7 +622,6 @@ const Game = {
         const num = document.getElementById('res-time');
         const msg = document.getElementById('res-msg');
 
-        // Logic for success vs slow vs fail
         if (isSuccess) {
             if (elapsed <= 30) {
                 title.innerText = "SPOT ON!";
@@ -634,7 +629,7 @@ const Game = {
                 msg.innerText = "Great speed!";
             } else {
                 title.innerText = "SPOT ON";
-                title.style.color = "var(--c-div)"; // Orangeish
+                title.style.color = "var(--c-div)";
                 msg.innerText = "But too slow (>30s)";
             }
             num.innerText = elapsed.toFixed(1) + 's';
