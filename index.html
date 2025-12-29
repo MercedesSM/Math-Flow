@@ -55,7 +55,7 @@
             color: #636e72; 
             margin-bottom: 2rem; 
             text-align: center; 
-            max-width: 320px; 
+            max-width: 340px; /* Slightly wider to ensure fit */
             line-height: 1.6; 
             font-size: 0.95rem;
             background: #f1f2f6;
@@ -89,43 +89,18 @@
             flex-direction: column;
         }
 
-        .top-bar {
-            width: 100%;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .btn-back {
-            background: #f1f2f6;
-            color: #636e72;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-
-        /* --- UPDATED TIMER CSS --- */
+        /* --- TIMER CSS --- */
         .timer-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 16px; /* BIGGER */
+            height: 16px; 
             background: #f1f2f6;
             z-index: 50;
             transition: background-color 0.3s;
         }
-        
-        /* The RED state when time is up */
-        .timer-container.overtime {
-            background-color: var(--c-sub) !important;
-        }
+        .timer-container.overtime { background-color: var(--c-sub) !important; }
 
         #timer-bar {
             height: 100%;
@@ -143,6 +118,7 @@
             justify-content: center;
             overflow: hidden;
             position: relative;
+            padding-top: 20px;
         }
 
         .carousel {
@@ -201,13 +177,13 @@
         
         .input-container {
             width: 100%;
-            padding: 15px 20px 20px 20px;
+            padding: 15px 20px 30px 20px;
             background: var(--bg-color);
             z-index: 60;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             border-top: 1px solid #f1f2f6;
             flex-shrink: 0;
         }
@@ -217,6 +193,14 @@
             gap: 10px;
             justify-content: center;
             width: 100%;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 320px; 
+            padding: 0 10px;
         }
 
         input[type="number"] {
@@ -253,15 +237,19 @@
             cursor: pointer;
         }
         
-        .btn-giveup {
+        .btn-secondary-link {
             background: transparent;
             color: #b2bec3;
             border: none;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             text-decoration: underline;
             cursor: pointer;
             padding: 5px;
         }
+        .btn-secondary-link:hover { color: var(--text-main); }
+        
+        .btn-exit { text-align: left; }
+        .btn-giveup { text-align: right; }
 
         .stat-number { font-size: 3rem; font-weight: 800; margin: 10px 0; }
         
@@ -301,9 +289,9 @@
         <div class="instructions">
             <strong>How to Play:</strong><br>
             1. Start with the first number.<br>
-            2. <strong>Swipe Left</strong> to reveal the next operation.<br>
+            2. <strong>Swipe Left</strong> for next step.<br>
             3. Keep the running total in your head.<br>
-            4. Enter the final number at the end.<br>
+            4. Enter the final number at the end.
         </div>
         <button class="btn" onclick="Game.init('daily')">Daily Challenge</button>
         <button class="btn btn-outline" onclick="Nav.to('screen-practice')">Practice Mode</button>
@@ -320,10 +308,6 @@
     <div id="screen-game" class="screen hidden">
         <div class="timer-container"><div id="timer-bar"></div></div>
         
-        <div class="top-bar">
-            <button class="btn-back" onclick="Game.exit()">← Exit</button>
-        </div>
-
         <div class="carousel-wrapper">
             <div class="carousel" id="carousel"></div>
         </div>
@@ -333,7 +317,10 @@
                 <input type="number" id="answer-input" placeholder="?" inputmode="numeric" enterkeyhint="done">
                 <button class="btn-submit" onclick="Game.checkAttempt()">Submit</button>
             </div>
-            <button class="btn-giveup" onclick="Game.endGame(false, true)">Give Up / Show Answer</button>
+            <div class="controls-row">
+                <button class="btn-secondary-link btn-exit" onclick="Game.exit()">← Exit</button>
+                <button class="btn-secondary-link btn-giveup" onclick="Game.endGame(false, true)">Give Up / Show Answer</button>
+            </div>
         </div>
     </div>
 
@@ -504,6 +491,7 @@ const Game = {
         const inp = document.getElementById('answer-input');
         inp.value = '';
         inp.classList.remove('shake');
+        inp.placeholder = '?';
         
         this.startTimer();
     },
