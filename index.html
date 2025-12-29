@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>30s Mental Maths</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-main: #2d3436;
+            
+            /* --- COLOR PALETTE --- */
+            --c-start: #2d3436; 
+            --c-add:   #27ae60; 
+            --c-sub:   #c0392b; 
+            --c-mult:  #2980b9; 
+            --c-div:   #e67e22; 
+            --c-perc:  #e056fd; 
+            --c-frac:  #16a085; 
+            --c-word:  #8e44ad; 
+            --c-pow:   #2c3e50; 
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-color);
+            transition: opacity 0.3s ease;
+            z-index: 10;
+            padding: 20px;
+        }
+        .hidden { display: none !important; }
+
+        h1 { font-weight: 800; font-size: 2.5rem; margin-bottom: 0.5rem; letter-spacing: -1px; }
+        p { color: #636e72; margin-bottom: 2rem; text-align: center; max-width: 300px; line-height: 1.5; }
+
+        .btn {
+            background: var(--text-main);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 100px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+            margin: 8px 0;
+            transition: transform 0.1s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-outline { background: white; color: var(--text-main); border: 2px solid #dfe6e9; }
+
+        /* --- Game UI --- */
+        #screen-game {
+            justify-content: flex-start;
+            padding-top: 60px;
+            position: relative;
+        }
+
+        .btn-back {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #f1f2f6;
+            color: #636e72;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .timer-container {
+            width: 100%;
+            max-width: 340px;
+            height: 6px;
+            background: #f1f2f6;
+            border-radius: 10px;
+            margin-bottom: 40px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        #timer-bar {
+            height: 100%;
+            width: 100%;
+            background: var(--text-main);
+            transform-origin: left;
+            transition: transform 1s linear;
+        }
+
+        .carousel {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            width: 100%;
+            height: 320px;
+            align-items: center;
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+            padding: 0 50vw; 
+        }
+        .carousel::-webkit-scrollbar { display: none; }
+
+        .card {
+            flex: 0 0 260px; 
+            height: 260px;
+            background: white;
+            border-radius: 30px;
+            margin: 0 -130px 0 0; 
+            margin-right: 20px; 
+            scroll-snap-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: 4px solid transparent;
+            position: relative;
+            transform-origin: center center;
+            will-change: transform; 
+        }
+
+        .math-text { font-size: 3.5rem; font-weight: 800; text-align: center; line-height: 1.1; }
+        .math-text.long { font-size: 2.5rem; }
+        
+        .card-arrow { position: absolute; bottom: 25px; font-size: 2rem; opacity: 0.1; color: black; }
+
+        .t-start { color: var(--c-start); border-color: #dfe6e9; }
+        .t-add   { color: var(--c-add);   border-color: var(--c-add); }
+        .t-sub   { color: var(--c-sub);   border-color: var(--c-sub); }
+        .t-mult  { color: var(--c-mult);  border-color: var(--c-mult); }
+        .t-div   { color: var(--c-div);   border-color: var(--c-div); }
+        .t-perc  { color: var(--c-perc);  border-color: var(--c-perc); }
+        .t-frac  { color: var(--c-frac);  border-color: var(--c-frac); }
+        .t-word  { color: var(--c-word);  border-color: var(--c-word); }
+        .t-pow   { color: var(--c-pow);   border-color: var(--c-pow); }
+        
+        .input-container {
+            margin-top: auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 40px;
+        }
+
+        input[type="number"] {
+            border: none;
+            border-bottom: 3px solid #dfe6e9;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            width: 200px;
+            padding: 10px;
+            outline: none;
+            font-family: inherit;
+            color: var(--text-main);
+            background: transparent;
+            border-radius: 0;
+        }
+        input:focus { border-color: var(--text-main); }
+        .stat-number { font-size: 4rem; font-weight: 800; margin: 10px 0; }
+
+    </style>
+</head>
+<body>
+
+    <div id="screen-home" class="screen">
+        <h1>30s MATH</h1>
+        <p>Complete the sequence in your head.<br>Integers only.</p>
+        <button class="btn" onclick="Game.init('daily')">Daily Challenge</button>
+        <button class="btn btn-outline" onclick="Nav.to('screen-practice')">Practice Mode</button>
+    </div>
+
+    <div id="screen-practice" class="screen hidden">
+        <h2>Select Difficulty</h2>
+        <button class="btn btn-outline" style="border-color: var(--c-add)" onclick="Game.init('practice', 'easy')">Easy</button>
+        <button class="btn btn-outline" style="border-color: var(--c-mult)" onclick="Game.init('practice', 'medium')">Medium</button>
+        <button class="btn btn-outline" style="border-color: var(--c-sub)" onclick="Game.init('practice', 'hard')">Hard</button>
+        <button class="btn" style="background:transparent; color:#999; margin-top:20px; box-shadow:none;" onclick="Nav.to('screen-home')">Back</button>
+    </div>
+
+    <div id="screen-game" class="screen hidden">
+        <button class="btn-back" onclick="Game.exit()">← Exit</button>
+        <div class="timer-container"><div id="timer-bar"></div></div>
+        <div class="carousel" id="carousel"></div>
+        <div class="input-container">
+            <input type="number" id="answer-input" placeholder="?" inputmode="numeric" enterkeyhint="done">
+            <button class="btn" style="margin-top:20px; width: auto; padding: 10px 30px;" onclick="Game.check()">Submit</button>
+        </div>
+    </div>
+
+    <div id="screen-result" class="screen hidden">
+        <h2 id="res-title">RESULT</h2>
+        <div id="res-time" class="stat-number">0.0s</div>
+        <p id="res-msg"></p>
+        <button id="btn-share" class="btn" onclick="Game.share()">Share Result</button>
+        <button class="btn btn-outline" onclick="Nav.to('screen-home')">Home</button>
+    </div>
+
+<script>
+
+/* --- MATH ENGINE --- */
+const MathEngine = {
+    // Semantic Groups
+    concepts: {
+        'halving': ['half', 'perc50', 'div2'],
+        'doubling': ['double', 'mult2', 'add100'],
+        'tripling': ['triple', 'mult3'],
+        'thirding': ['third', 'div3'],
+        'quartering': ['div4', 'perc25'],
+        'squaring': ['square', 'mult_self'],
+        'rooting': ['sqrt']
+    },
+    
+    // Operation Definitions
+    // Added 'opId' and 'opVal' for smarter history tracking
+    ops: {
+        'add':    { fn: (c, r) => { let v = Math.floor(r()*20)+1; return { val: c+v, txt: `+ ${v}`, color: 't-add', opId: 'add', opVal: v } } },
+        'sub':    { fn: (c, r) => { let v = Math.floor(r()*15)+1; return { val: c-v, txt: `- ${v}`, color: 't-sub', opId: 'sub', opVal: v } } },
+        'mult':   { fn: (c, r) => { let v = Math.floor(r()*4)+2; return { val: c*v, txt: `× ${v}`, color: 't-mult', opId: 'mult', opVal: v } } },
+        
+        'div':    { fn: (c, r, ban) => { 
+            let divs = []; 
+            for(let i=2; i<=10; i++) if(c%i===0) divs.push(i);
+            if(ban.has('halving')) divs = divs.filter(d => d !== 2);
+            if(ban.has('thirding')) divs = divs.filter(d => d !== 3);
+            if(ban.has('quartering')) divs = divs.filter(d => d !== 4);
+            if(divs.length === 0) return null;
+            let v = divs[Math.floor(r()*divs.length)];
+            return { val: c/v, txt: `÷ ${v}`, color: 't-div', opId: 'div', opVal: v };
+        }},
+
+        'square': { fn: (c) => c > 12 ? null : { val: c*c, txt: 'Square it', cat: 'squaring', color: 't-pow', opId: 'pow', opVal: 2 } },
+        'sqrt':   { fn: (c) => Number.isInteger(Math.sqrt(c)) ? { val: Math.sqrt(c), txt: 'Square Root', cat: 'rooting', color: 't-pow', opId: 'root', opVal: 2 } : null },
+
+        'double': { fn: (c) => ({ val: c*2, txt: 'Double', cat: 'doubling', color: 't-word', opId: 'mult', opVal: 2 }) },
+        'half':   { fn: (c) => c%2===0 ? ({ val: c/2, txt: 'Half', cat: 'halving', color: 't-word', opId: 'div', opVal: 2 }) : null },
+        'triple': { fn: (c) => ({ val: c*3, txt: 'Triple', cat: 'tripling', color: 't-word', opId: 'mult', opVal: 3 }) },
+        'third':  { fn: (c) => c%3===0 ? ({ val: c/3, txt: 'Third', cat: 'thirding', color: 't-word', opId: 'div', opVal: 3 }) : null },
+
+        'perc10': { fn: (c) => c%10===0 ? ({ val: c*0.1, txt: '10%', cat: 'perc', color: 't-perc', opId: 'div', opVal: 10 }) : null },
+        'perc25': { fn: (c) => c%4===0 ? ({ val: c*0.25, txt: '25%', cat: 'quartering', color: 't-perc', opId: 'div', opVal: 4 }) : null },
+        'perc50': { fn: (c) => c%2===0 ? ({ val: c*0.5, txt: '50%', cat: 'halving', color: 't-perc', opId: 'div', opVal: 2 }) : null },
+        
+        'add50':  { fn: (c) => c%2===0 ? ({ val: c*1.5, txt: 'Add 50%', cat: 'perc_growth', color: 't-frac', opId: 'growth', opVal: 0.5 }) : null },
+        'sub25':  { fn: (c) => c%4===0 ? ({ val: c*0.75, txt: 'Lose 25%', cat: 'perc_decay', color: 't-frac', opId: 'decay', opVal: 0.25 }) : null },
+
+        'frac34': { fn: (c) => c%4===0 ? ({ val: (c/4)*3, txt: '¾', cat: 'frac', color: 't-frac', opId: 'complex', opVal: 0.75 }) : null },
+    },
+
+    getPool(diff) {
+        let base = ['add', 'sub'];
+        if(diff === 'easy') return [...base, 'double', 'half', 'perc10']; 
+        if(diff === 'medium') return [...base, 'mult', 'div', 'double', 'half', 'square', 'perc50', 'perc25', 'add50'];
+        return [...base, 'mult', 'div', 'square', 'sqrt', 'triple', 'third', 'perc10', 'add50', 'sub25', 'frac34'];
+    },
+
+    generate(rng, difficulty) {
+        let current = Math.floor(rng() * 20) + 10; 
+        let sequence = [{ txt: current, color: 't-start', type: 'start' }];
+        
+        let bannedConcepts = new Set();
+        let usedOperations = new Set(); // Stores "div-3", "add-5" to prevent exact repeats
+        let previousStep = null;
+
+        const poolKeys = this.getPool(difficulty);
+
+        for (let i = 0; i < 9; i++) {
+            let valid = false;
+            let attempts = 0;
+
+            while (!valid && attempts < 50) {
+                attempts++;
+                const opKey = poolKeys[Math.floor(rng() * poolKeys.length)];
+                
+                // 1. Check Concept Ban (Synonyms)
+                let isBanned = false;
+                for(let c in this.concepts) {
+                    if(this.concepts[c].includes(opKey) && bannedConcepts.has(c)) { isBanned = true; break; }
+                }
+                if(isBanned) continue;
+
+                const opDef = this.ops[opKey];
+                const result = opDef.fn(current, rng, bannedConcepts);
+
+                if (result && Number.isInteger(result.val) && result.val > 0 && result.val < 1000) {
+                    
+                    // 2. Exact Repeat Check (e.g., prevent "/3" if we already had "/3")
+                    // We treat "Third" and "div 3" as unique strings here, but the Concept Ban above handles the overlap.
+                    // This handles repeating "div 3" and "div 3".
+                    const uniqueKey = `${result.opId}-${result.opVal}`;
+                    if(usedOperations.has(uniqueKey)) continue;
+
+                    // 3. Inverse Check (Don't allow x3 then /3 immediately)
+                    if (previousStep) {
+                        const prev = previousStep;
+                        const curr = result;
+                        // Check if they are inverses
+                        if (
+                            (prev.opId === 'add' && curr.opId === 'sub' && prev.opVal === curr.opVal) ||
+                            (prev.opId === 'sub' && curr.opId === 'add' && prev.opVal === curr.opVal) ||
+                            (prev.opId === 'mult' && curr.opId === 'div' && prev.opVal === curr.opVal) ||
+                            (prev.opId === 'div' && curr.opId === 'mult' && prev.opVal === curr.opVal) ||
+                            (prev.opId === 'pow' && curr.opId === 'root') ||
+                            (prev.opId === 'root' && curr.opId === 'pow')
+                        ) {
+                            continue; // Skip this result, it's just undoing the last step
+                        }
+                    }
+
+                    // --- ACCEPTED ---
+                    current = result.val;
+                    sequence.push({ 
+                        txt: result.txt, 
+                        color: result.color,
+                        long: result.txt.length > 8 
+                    });
+                    
+                    if (result.cat) bannedConcepts.add(result.cat);
+                    for(let c in this.concepts) {
+                        if(this.concepts[c].includes(opKey)) bannedConcepts.add(c);
+                    }
+                    
+                    // Add strict checks to sets
+                    usedOperations.add(uniqueKey);
+                    previousStep = result;
+                    valid = true;
+                }
+            }
+            
+            // Fallback
+            if (!valid) {
+                current += 1;
+                sequence.push({ txt: '+ 1', color: 't-add' });
+            }
+        }
+        return { sequence, target: current };
+    }
+};
+
+/* --- APP LOGIC --- */
+const Nav = {
+    to(id) {
+        document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+};
+
+const Game = {
+    data: null,
+    startTime: 0,
+    
+    init(mode, diff = 'medium') {
+        let rng;
+        if (mode === 'daily') {
+            const seedStr = new Date().toISOString().slice(0, 10);
+            rng = this.createSeeder(seedStr);
+            diff = 'medium'; 
+        } else {
+            rng = Math.random;
+        }
+
+        const result = MathEngine.generate(rng, diff);
+        this.data = result;
+        
+        this.renderCarousel(result.sequence);
+        Nav.to('screen-game');
+
+        const c = document.getElementById('carousel');
+        c.scrollLeft = 0;
+        this.updateScales();
+
+        const inp = document.getElementById('answer-input');
+        inp.value = '';
+        inp.focus();
+        
+        this.startTimer();
+    },
+
+    exit() {
+        const bar = document.getElementById('timer-bar');
+        bar.style.transition = 'none';
+        bar.style.transform = 'scaleX(1)';
+        Nav.to('screen-home');
+    },
+
+    createSeeder(str) {
+        let h = 2166136261 >>> 0;
+        for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+        return function() {
+            h = Math.imul(h ^ h >>> 15, 0x735a2d97);
+            let t = h = Math.imul(h ^ h >>> 15, 0xcaf649a9);
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+    },
+
+    renderCarousel(seq) {
+        const c = document.getElementById('carousel');
+        c.innerHTML = '';
+        
+        seq.forEach((item, i) => {
+            const card = document.createElement('div');
+            card.className = `card ${item.color}`;
+            const textClass = item.long ? 'math-text long' : 'math-text';
+            card.innerHTML = `
+                <div class="${textClass}">${item.txt}</div>
+                <div class="card-arrow">→</div>
+            `;
+            c.appendChild(card);
+        });
+
+        c.removeEventListener('scroll', this.updateScales); 
+        c.addEventListener('scroll', () => this.updateScales());
+    },
+
+    updateScales() {
+        const c = document.getElementById('carousel');
+        const center = c.scrollLeft + (c.offsetWidth / 2);
+        const cards = c.querySelectorAll('.card');
+        
+        cards.forEach(card => {
+            const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
+            const dist = Math.abs(center - cardCenter);
+            const maxDist = 200; 
+            
+            let scale = 0.8; 
+            let opacity = 0.4; 
+            let zIndex = 1;
+
+            if (dist < maxDist) {
+                const ratio = 1 - (dist / maxDist);
+                scale = 0.8 + (ratio * 0.3); 
+                opacity = 0.4 + (ratio * 0.6); 
+                if (ratio > 0.8) zIndex = 10; 
+            }
+
+            card.style.transform = `scale(${scale})`;
+            card.style.opacity = opacity;
+            card.style.zIndex = zIndex;
+        });
+    },
+
+    startTimer() {
+        const bar = document.getElementById('timer-bar');
+        bar.style.transition = 'none';
+        bar.style.transform = 'scaleX(1)';
+        void bar.offsetWidth;
+        setTimeout(() => {
+            bar.style.transition = 'transform 30s linear';
+            bar.style.transform = 'scaleX(0)';
+        }, 50);
+        this.startTime = Date.now();
+    },
+
+    check() {
+        const val = parseInt(document.getElementById('answer-input').value);
+        const time = ((Date.now() - this.startTime) / 1000).toFixed(1);
+        const isCorrect = val === this.data.target;
+
+        const title = document.getElementById('res-title');
+        const num = document.getElementById('res-time');
+        const msg = document.getElementById('res-msg');
+
+        if (isCorrect) {
+            title.innerText = "SUCCESS";
+            title.style.color = "var(--c-add)";
+            num.innerText = time + 's';
+            msg.innerText = "Spot on!";
+        } else {
+            title.innerText = "MISSED";
+            title.style.color = "var(--c-sub)";
+            num.innerText = "---";
+            msg.innerText = `Correct answer: ${this.data.target}`;
+        }
+        
+        this.lastResult = { isCorrect, time };
+        Nav.to('screen-result');
+    },
+
+    async share() {
+        const r = this.lastResult;
+        const icon = r.isCorrect ? '✅' : '❌';
+        const txt = `30s Math Challenge\n${icon} ${r.time}s\nBeat this!`;
+        try {
+            await navigator.clipboard.writeText(txt);
+            document.getElementById('btn-share').innerText = 'Copied!';
+        } catch(e) { alert('Copy failed'); }
+    }
+};
+
+document.getElementById('answer-input').addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') Game.check();
+});
+
+</script>
+</body>
+</html>
