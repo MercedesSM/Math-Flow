@@ -29,7 +29,6 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            /* Use dvh (Dynamic Viewport Height) for mobile browser bars */
             height: 100dvh; 
             display: flex;
             flex-direction: column;
@@ -71,15 +70,13 @@
         .btn:active { transform: scale(0.98); }
         .btn-outline { background: white; color: var(--text-main); border: 2px solid #dfe6e9; }
 
-        /* --- Game UI --- */
         #screen-game {
             justify-content: flex-start;
-            padding-top: 0; /* Remove top padding to fit timer at very top */
+            padding-top: 0; 
             display: flex;
             flex-direction: column;
         }
 
-        /* Top Bar Area */
         .top-bar {
             width: 100%;
             height: 60px;
@@ -101,13 +98,12 @@
             cursor: pointer;
         }
 
-        /* Timer - Moved to very top, high visibility */
         .timer-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 8px; /* Thicker for visibility */
+            height: 8px;
             background: #f1f2f6;
             z-index: 50;
         }
@@ -119,48 +115,40 @@
             transition: transform 1s linear;
         }
 
-        /* Carousel Container */
         .carousel-wrapper {
-            flex-grow: 1; /* Takes up all available space */
+            flex-grow: 1;
             width: 100%;
             display: flex;
-            align-items: center; /* Vertically center cards */
+            align-items: center;
             justify-content: center;
             overflow: hidden;
             position: relative;
         }
 
+        /* --- CAROUSEL LOGIC --- */
         .carousel {
             display: flex;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
             width: 100%;
-            height: 100%; /* Fill wrapper */
+            height: 100%;
             align-items: center;
             scrollbar-width: none; 
             -ms-overflow-style: none;
             
-            /* PEEK LOGIC: 
-               Card is 60vw. 
-               Remaining space is 40vw.
-               Padding left/right = 20vw each.
-               This ensures previous/next cards are always visible.
-            */
+            /* MOBILE DEFAULT: Card is 60vw, so padding is 20vw each side to center it */
             padding: 0 20vw; 
         }
         .carousel::-webkit-scrollbar { display: none; }
 
         .card {
-            /* Responsive Sizing */
+            /* MOBILE DEFAULT */
             flex: 0 0 60vw; 
-            height: 60vw; /* Keep it square-ish */
-            max-height: 350px;
-            max-width: 350px;
+            height: 60vw;
             
             background: white;
             border-radius: 25px;
-            margin: 0 15px; /* Physical gap between cards */
-            
+            margin: 0 15px; 
             scroll-snap-align: center;
             display: flex;
             flex-direction: column;
@@ -176,8 +164,21 @@
         .math-text { font-size: 15vw; font-weight: 800; text-align: center; line-height: 1.1; }
         .math-text.long { font-size: 8vw; }
         
-        /* Clamp font sizes for desktop so they don't get huge */
+        /* --- DESKTOP FIX --- 
+           When screen is larger than mobile (600px+), we clamp the card to 350px.
+           We must recalculate padding so the 350px card stays exactly in the center.
+           Formula: Padding = (100% - CardWidth) / 2 
+        */
         @media (min-width: 600px) {
+            .carousel {
+                /* (100vw - 350px) / 2 = Center Alignment */
+                padding: 0 calc(50% - 175px); 
+            }
+            .card {
+                flex: 0 0 350px;
+                height: 350px;
+                width: 350px;
+            }
             .math-text { font-size: 4rem; }
             .math-text.long { font-size: 2.5rem; }
         }
@@ -195,7 +196,6 @@
         .t-word  { color: var(--c-word);  border-color: var(--c-word); }
         .t-pow   { color: var(--c-pow);   border-color: var(--c-pow); }
         
-        /* Input Area - Fixed at bottom */
         .input-container {
             width: 100%;
             padding: 15px 20px 30px 20px;
@@ -212,7 +212,7 @@
         input[type="number"] {
             border: 2px solid #dfe6e9;
             border-radius: 12px;
-            font-size: 1.5rem; /* Large enough to stop iOS zoom */
+            font-size: 1.5rem; 
             font-weight: bold;
             text-align: center;
             width: 120px;
@@ -237,10 +237,12 @@
 
         .stat-number { font-size: 4rem; font-weight: 800; margin: 10px 0; }
 
-        /* When keyboard is open on some devices, ensure carousel doesn't get crushed to 0 height */
+        /* Keyboard Height Fix */
         @media (max-height: 500px) {
             .carousel-wrapper { min-height: 200px; }
-            .card { height: 180px; width: 180px; flex: 0 0 180px; }
+            /* Force smaller cards on landscape/keyboard open */
+            .card { height: 180px !important; width: 180px !important; flex: 0 0 180px !important; }
+            .carousel { padding: 0 calc(50% - 90px); } /* Recalc center for small card */
             .math-text { font-size: 3rem; }
         }
 
@@ -249,7 +251,7 @@
 <body>
 
     <div id="screen-home" class="screen">
-        <h1>30s MATH</h1>
+        <h1>MATH FLOW</h1>
         <p>Complete the sequence in your head.<br>Integers only.</p>
         <button class="btn" onclick="Game.init('daily')">Daily Challenge</button>
         <button class="btn btn-outline" onclick="Nav.to('screen-practice')">Practice Mode</button>
@@ -430,9 +432,12 @@ const Game = {
         this.renderCarousel(result.sequence);
         Nav.to('screen-game');
 
-        const c = document.getElementById('carousel');
-        c.scrollLeft = 0;
-        this.updateScales();
+        // FORCE SCROLL RESET with slight delay to ensure render
+        setTimeout(() => {
+            const c = document.getElementById('carousel');
+            c.scrollLeft = 0;
+            this.updateScales();
+        }, 10);
 
         const inp = document.getElementById('answer-input');
         inp.value = '';
@@ -483,7 +488,8 @@ const Game = {
         cards.forEach(card => {
             const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
             const dist = Math.abs(center - cardCenter);
-            const maxDist = card.offsetWidth; // Scale relative to card size
+            // Dynamic Max Distance based on card width (works for both mobile and desktop)
+            const maxDist = card.offsetWidth; 
             
             let scale = 0.8; 
             let opacity = 0.4; 
