@@ -29,7 +29,8 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            height: 100vh;
+            /* Use dvh (Dynamic Viewport Height) for mobile browser bars */
+            height: 100dvh; 
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -73,14 +74,23 @@
         /* --- Game UI --- */
         #screen-game {
             justify-content: flex-start;
-            padding-top: 60px;
+            padding-top: 0; /* Remove top padding to fit timer at very top */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar Area */
+        .top-bar {
+            width: 100%;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
             position: relative;
+            flex-shrink: 0;
         }
 
         .btn-back {
-            position: absolute;
-            top: 20px;
-            left: 20px;
             background: #f1f2f6;
             color: #636e72;
             border: none;
@@ -89,18 +99,17 @@
             font-weight: 600;
             font-size: 0.9rem;
             cursor: pointer;
-            z-index: 100;
         }
 
+        /* Timer - Moved to very top, high visibility */
         .timer-container {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 340px;
-            height: 6px;
+            height: 8px; /* Thicker for visibility */
             background: #f1f2f6;
-            border-radius: 10px;
-            margin-bottom: 40px;
-            overflow: hidden;
-            margin-top: 20px;
+            z-index: 50;
         }
         #timer-bar {
             height: 100%;
@@ -110,43 +119,72 @@
             transition: transform 1s linear;
         }
 
+        /* Carousel Container */
+        .carousel-wrapper {
+            flex-grow: 1; /* Takes up all available space */
+            width: 100%;
+            display: flex;
+            align-items: center; /* Vertically center cards */
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
         .carousel {
             display: flex;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
             width: 100%;
-            height: 320px;
+            height: 100%; /* Fill wrapper */
             align-items: center;
             scrollbar-width: none; 
             -ms-overflow-style: none;
-            padding: 0 50vw; 
+            
+            /* PEEK LOGIC: 
+               Card is 60vw. 
+               Remaining space is 40vw.
+               Padding left/right = 20vw each.
+               This ensures previous/next cards are always visible.
+            */
+            padding: 0 20vw; 
         }
         .carousel::-webkit-scrollbar { display: none; }
 
         .card {
-            flex: 0 0 260px; 
-            height: 260px;
+            /* Responsive Sizing */
+            flex: 0 0 60vw; 
+            height: 60vw; /* Keep it square-ish */
+            max-height: 350px;
+            max-width: 350px;
+            
             background: white;
-            border-radius: 30px;
-            margin: 0 -130px 0 0; 
-            margin-right: 20px; 
+            border-radius: 25px;
+            margin: 0 15px; /* Physical gap between cards */
+            
             scroll-snap-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             border: 4px solid transparent;
             position: relative;
             transform-origin: center center;
             will-change: transform; 
         }
 
-        .math-text { font-size: 3.5rem; font-weight: 800; text-align: center; line-height: 1.1; }
-        .math-text.long { font-size: 2.5rem; }
+        .math-text { font-size: 15vw; font-weight: 800; text-align: center; line-height: 1.1; }
+        .math-text.long { font-size: 8vw; }
         
-        .card-arrow { position: absolute; bottom: 25px; font-size: 2rem; opacity: 0.1; color: black; }
+        /* Clamp font sizes for desktop so they don't get huge */
+        @media (min-width: 600px) {
+            .math-text { font-size: 4rem; }
+            .math-text.long { font-size: 2.5rem; }
+        }
 
+        .card-arrow { position: absolute; bottom: 15px; font-size: 2rem; opacity: 0.1; color: black; }
+
+        /* Colors */
         .t-start { color: var(--c-start); border-color: #dfe6e9; }
         .t-add   { color: var(--c-add);   border-color: var(--c-add); }
         .t-sub   { color: var(--c-sub);   border-color: var(--c-sub); }
@@ -157,31 +195,54 @@
         .t-word  { color: var(--c-word);  border-color: var(--c-word); }
         .t-pow   { color: var(--c-pow);   border-color: var(--c-pow); }
         
+        /* Input Area - Fixed at bottom */
         .input-container {
-            margin-top: auto;
             width: 100%;
+            padding: 15px 20px 30px 20px;
+            background: var(--bg-color);
+            z-index: 60;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-bottom: 40px;
+            flex-direction: row;
+            justify-content: center;
+            gap: 10px;
+            border-top: 1px solid #f1f2f6;
+            flex-shrink: 0;
         }
 
         input[type="number"] {
-            border: none;
-            border-bottom: 3px solid #dfe6e9;
-            font-size: 2.5rem;
+            border: 2px solid #dfe6e9;
+            border-radius: 12px;
+            font-size: 1.5rem; /* Large enough to stop iOS zoom */
             font-weight: bold;
             text-align: center;
-            width: 200px;
+            width: 120px;
             padding: 10px;
             outline: none;
             font-family: inherit;
             color: var(--text-main);
-            background: transparent;
-            border-radius: 0;
+            background: #f9f9f9;
         }
-        input:focus { border-color: var(--text-main); }
+        input:focus { border-color: var(--text-main); background: #fff; }
+
+        .btn-submit {
+            background: var(--text-main);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 0 25px;
+            cursor: pointer;
+        }
+
         .stat-number { font-size: 4rem; font-weight: 800; margin: 10px 0; }
+
+        /* When keyboard is open on some devices, ensure carousel doesn't get crushed to 0 height */
+        @media (max-height: 500px) {
+            .carousel-wrapper { min-height: 200px; }
+            .card { height: 180px; width: 180px; flex: 0 0 180px; }
+            .math-text { font-size: 3rem; }
+        }
 
     </style>
 </head>
@@ -203,12 +264,19 @@
     </div>
 
     <div id="screen-game" class="screen hidden">
-        <button class="btn-back" onclick="Game.exit()">← Exit</button>
         <div class="timer-container"><div id="timer-bar"></div></div>
-        <div class="carousel" id="carousel"></div>
+        
+        <div class="top-bar">
+            <button class="btn-back" onclick="Game.exit()">← Exit</button>
+        </div>
+
+        <div class="carousel-wrapper">
+            <div class="carousel" id="carousel"></div>
+        </div>
+
         <div class="input-container">
             <input type="number" id="answer-input" placeholder="?" inputmode="numeric" enterkeyhint="done">
-            <button class="btn" style="margin-top:20px; width: auto; padding: 10px 30px;" onclick="Game.check()">Submit</button>
+            <button class="btn-submit" onclick="Game.check()">Submit</button>
         </div>
     </div>
 
@@ -224,7 +292,6 @@
 
 /* --- MATH ENGINE --- */
 const MathEngine = {
-    // Semantic Groups
     concepts: {
         'halving': ['half', 'perc50', 'div2'],
         'doubling': ['double', 'mult2', 'add100'],
@@ -235,13 +302,10 @@ const MathEngine = {
         'rooting': ['sqrt']
     },
     
-    // Operation Definitions
-    // Added 'opId' and 'opVal' for smarter history tracking
     ops: {
         'add':    { fn: (c, r) => { let v = Math.floor(r()*20)+1; return { val: c+v, txt: `+ ${v}`, color: 't-add', opId: 'add', opVal: v } } },
         'sub':    { fn: (c, r) => { let v = Math.floor(r()*15)+1; return { val: c-v, txt: `- ${v}`, color: 't-sub', opId: 'sub', opVal: v } } },
         'mult':   { fn: (c, r) => { let v = Math.floor(r()*4)+2; return { val: c*v, txt: `× ${v}`, color: 't-mult', opId: 'mult', opVal: v } } },
-        
         'div':    { fn: (c, r, ban) => { 
             let divs = []; 
             for(let i=2; i<=10; i++) if(c%i===0) divs.push(i);
@@ -252,22 +316,17 @@ const MathEngine = {
             let v = divs[Math.floor(r()*divs.length)];
             return { val: c/v, txt: `÷ ${v}`, color: 't-div', opId: 'div', opVal: v };
         }},
-
         'square': { fn: (c) => c > 12 ? null : { val: c*c, txt: 'Square it', cat: 'squaring', color: 't-pow', opId: 'pow', opVal: 2 } },
         'sqrt':   { fn: (c) => Number.isInteger(Math.sqrt(c)) ? { val: Math.sqrt(c), txt: 'Square Root', cat: 'rooting', color: 't-pow', opId: 'root', opVal: 2 } : null },
-
         'double': { fn: (c) => ({ val: c*2, txt: 'Double', cat: 'doubling', color: 't-word', opId: 'mult', opVal: 2 }) },
         'half':   { fn: (c) => c%2===0 ? ({ val: c/2, txt: 'Half', cat: 'halving', color: 't-word', opId: 'div', opVal: 2 }) : null },
         'triple': { fn: (c) => ({ val: c*3, txt: 'Triple', cat: 'tripling', color: 't-word', opId: 'mult', opVal: 3 }) },
         'third':  { fn: (c) => c%3===0 ? ({ val: c/3, txt: 'Third', cat: 'thirding', color: 't-word', opId: 'div', opVal: 3 }) : null },
-
         'perc10': { fn: (c) => c%10===0 ? ({ val: c*0.1, txt: '10%', cat: 'perc', color: 't-perc', opId: 'div', opVal: 10 }) : null },
         'perc25': { fn: (c) => c%4===0 ? ({ val: c*0.25, txt: '25%', cat: 'quartering', color: 't-perc', opId: 'div', opVal: 4 }) : null },
         'perc50': { fn: (c) => c%2===0 ? ({ val: c*0.5, txt: '50%', cat: 'halving', color: 't-perc', opId: 'div', opVal: 2 }) : null },
-        
         'add50':  { fn: (c) => c%2===0 ? ({ val: c*1.5, txt: 'Add 50%', cat: 'perc_growth', color: 't-frac', opId: 'growth', opVal: 0.5 }) : null },
         'sub25':  { fn: (c) => c%4===0 ? ({ val: c*0.75, txt: 'Lose 25%', cat: 'perc_decay', color: 't-frac', opId: 'decay', opVal: 0.25 }) : null },
-
         'frac34': { fn: (c) => c%4===0 ? ({ val: (c/4)*3, txt: '¾', cat: 'frac', color: 't-frac', opId: 'complex', opVal: 0.75 }) : null },
     },
 
@@ -283,7 +342,7 @@ const MathEngine = {
         let sequence = [{ txt: current, color: 't-start', type: 'start' }];
         
         let bannedConcepts = new Set();
-        let usedOperations = new Set(); // Stores "div-3", "add-5" to prevent exact repeats
+        let usedOperations = new Set(); 
         let previousStep = null;
 
         const poolKeys = this.getPool(difficulty);
@@ -296,7 +355,6 @@ const MathEngine = {
                 attempts++;
                 const opKey = poolKeys[Math.floor(rng() * poolKeys.length)];
                 
-                // 1. Check Concept Ban (Synonyms)
                 let isBanned = false;
                 for(let c in this.concepts) {
                     if(this.concepts[c].includes(opKey) && bannedConcepts.has(c)) { isBanned = true; break; }
@@ -307,18 +365,12 @@ const MathEngine = {
                 const result = opDef.fn(current, rng, bannedConcepts);
 
                 if (result && Number.isInteger(result.val) && result.val > 0 && result.val < 1000) {
-                    
-                    // 2. Exact Repeat Check (e.g., prevent "/3" if we already had "/3")
-                    // We treat "Third" and "div 3" as unique strings here, but the Concept Ban above handles the overlap.
-                    // This handles repeating "div 3" and "div 3".
                     const uniqueKey = `${result.opId}-${result.opVal}`;
                     if(usedOperations.has(uniqueKey)) continue;
 
-                    // 3. Inverse Check (Don't allow x3 then /3 immediately)
                     if (previousStep) {
                         const prev = previousStep;
                         const curr = result;
-                        // Check if they are inverses
                         if (
                             (prev.opId === 'add' && curr.opId === 'sub' && prev.opVal === curr.opVal) ||
                             (prev.opId === 'sub' && curr.opId === 'add' && prev.opVal === curr.opVal) ||
@@ -326,12 +378,9 @@ const MathEngine = {
                             (prev.opId === 'div' && curr.opId === 'mult' && prev.opVal === curr.opVal) ||
                             (prev.opId === 'pow' && curr.opId === 'root') ||
                             (prev.opId === 'root' && curr.opId === 'pow')
-                        ) {
-                            continue; // Skip this result, it's just undoing the last step
-                        }
+                        ) continue;
                     }
 
-                    // --- ACCEPTED ---
                     current = result.val;
                     sequence.push({ 
                         txt: result.txt, 
@@ -340,22 +389,14 @@ const MathEngine = {
                     });
                     
                     if (result.cat) bannedConcepts.add(result.cat);
-                    for(let c in this.concepts) {
-                        if(this.concepts[c].includes(opKey)) bannedConcepts.add(c);
-                    }
+                    for(let c in this.concepts) if(this.concepts[c].includes(opKey)) bannedConcepts.add(c);
                     
-                    // Add strict checks to sets
                     usedOperations.add(uniqueKey);
                     previousStep = result;
                     valid = true;
                 }
             }
-            
-            // Fallback
-            if (!valid) {
-                current += 1;
-                sequence.push({ txt: '+ 1', color: 't-add' });
-            }
+            if (!valid) { current += 1; sequence.push({ txt: '+ 1', color: 't-add' }); }
         }
         return { sequence, target: current };
     }
@@ -395,7 +436,6 @@ const Game = {
 
         const inp = document.getElementById('answer-input');
         inp.value = '';
-        inp.focus();
         
         this.startTimer();
     },
@@ -420,7 +460,6 @@ const Game = {
     renderCarousel(seq) {
         const c = document.getElementById('carousel');
         c.innerHTML = '';
-        
         seq.forEach((item, i) => {
             const card = document.createElement('div');
             card.className = `card ${item.color}`;
@@ -444,7 +483,7 @@ const Game = {
         cards.forEach(card => {
             const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
             const dist = Math.abs(center - cardCenter);
-            const maxDist = 200; 
+            const maxDist = card.offsetWidth; // Scale relative to card size
             
             let scale = 0.8; 
             let opacity = 0.4; 
@@ -452,7 +491,7 @@ const Game = {
 
             if (dist < maxDist) {
                 const ratio = 1 - (dist / maxDist);
-                scale = 0.8 + (ratio * 0.3); 
+                scale = 0.8 + (ratio * 0.3); // Scales up to 1.1
                 opacity = 0.4 + (ratio * 0.6); 
                 if (ratio > 0.8) zIndex = 10; 
             }
@@ -511,6 +550,7 @@ const Game = {
     }
 };
 
+// Enter key support
 document.getElementById('answer-input').addEventListener('keypress', (e) => {
     if(e.key === 'Enter') Game.check();
 });
