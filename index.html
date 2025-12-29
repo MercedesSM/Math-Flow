@@ -55,7 +55,7 @@
             color: #636e72; 
             margin-bottom: 2rem; 
             text-align: center; 
-            max-width: 340px; /* Slightly wider to ensure fit */
+            max-width: 340px; 
             line-height: 1.6; 
             font-size: 0.95rem;
             background: #f1f2f6;
@@ -150,16 +150,20 @@
             position: relative;
             transform-origin: center center;
             will-change: transform; 
+            padding: 10px;
         }
 
-        .math-text { font-size: 15vw; font-weight: 800; text-align: center; line-height: 1.1; }
-        .math-text.long { font-size: 8vw; }
+        /* Adjusted text sizes to handle longer phrases */
+        .math-text { font-size: 14vw; font-weight: 800; text-align: center; line-height: 1.1; word-break: break-word; }
+        .math-text.medium { font-size: 10vw; }
+        .math-text.long { font-size: 7vw; }
         
         @media (min-width: 600px) {
             .carousel { padding: 0 calc(50% - 175px); }
             .card { flex: 0 0 350px; height: 350px; width: 350px; }
             .math-text { font-size: 4rem; }
-            .math-text.long { font-size: 2.5rem; }
+            .math-text.medium { font-size: 3rem; }
+            .math-text.long { font-size: 2.2rem; }
         }
 
         .card-arrow { position: absolute; bottom: 15px; font-size: 2rem; opacity: 0.1; color: black; }
@@ -299,9 +303,9 @@
 
     <div id="screen-practice" class="screen hidden">
         <h2>Select Difficulty</h2>
-        <button class="btn btn-outline" style="border-color: var(--c-add)" onclick="Game.init('practice', 'easy')">Easy</button>
-        <button class="btn btn-outline" style="border-color: var(--c-mult)" onclick="Game.init('practice', 'medium')">Medium</button>
-        <button class="btn btn-outline" style="border-color: var(--c-sub)" onclick="Game.init('practice', 'hard')">Hard</button>
+        <button class="btn btn-outline" style="border-color: var(--c-add)" onclick="Game.init('practice', 'easy')">Easy (Beginner)</button>
+        <button class="btn btn-outline" style="border-color: var(--c-mult)" onclick="Game.init('practice', 'medium')">Medium (Intermediate)</button>
+        <button class="btn btn-outline" style="border-color: var(--c-sub)" onclick="Game.init('practice', 'hard')">Hard (Advanced)</button>
         <button class="btn" style="background:transparent; color:#999; margin-top:20px; box-shadow:none;" onclick="Nav.to('screen-home')">Back</button>
     </div>
 
@@ -337,60 +341,126 @@
 
 <script>
 
+/* --- ADVANCED MATH ENGINE (v11) --- */
 const MathEngine = {
-    concepts: {
-        'halving': ['half', 'perc50', 'div2'],
-        'doubling': ['double', 'mult2', 'add100'],
-        'tripling': ['triple', 'mult3'],
-        'thirding': ['third', 'div3'],
-        'quartering': ['div4', 'perc25'],
-        'squaring': ['square', 'mult_self'],
-        'rooting': ['sqrt']
-    },
-    
+    // Helper to pick random phrase
+    phrase(arr, r) { return arr[Math.floor(r() * arr.length)]; },
+
     ops: {
-        'add':    { fn: (c, r) => { let v = Math.floor(r()*20)+1; return { val: c+v, txt: `+ ${v}`, color: 't-add', opId: 'add', opVal: v } } },
-        'sub':    { fn: (c, r) => { let v = Math.floor(r()*15)+1; return { val: c-v, txt: `- ${v}`, color: 't-sub', opId: 'sub', opVal: v } } },
-        'mult':   { fn: (c, r) => { let v = Math.floor(r()*4)+2; return { val: c*v, txt: `× ${v}`, color: 't-mult', opId: 'mult', opVal: v } } },
-        'div':    { fn: (c, r, ban) => { 
-            let divs = []; 
-            for(let i=2; i<=10; i++) if(c%i===0) divs.push(i);
-            if(ban.has('halving')) divs = divs.filter(d => d !== 2);
-            if(ban.has('thirding')) divs = divs.filter(d => d !== 3);
-            if(ban.has('quartering')) divs = divs.filter(d => d !== 4);
-            if(divs.length === 0) return null;
-            let v = divs[Math.floor(r()*divs.length)];
-            return { val: c/v, txt: `÷ ${v}`, color: 't-div', opId: 'div', opVal: v };
-        }},
-        'square': { fn: (c) => c > 12 ? null : { val: c*c, txt: 'Square it', cat: 'squaring', color: 't-pow', opId: 'pow', opVal: 2 } },
-        'sqrt':   { fn: (c) => Number.isInteger(Math.sqrt(c)) ? { val: Math.sqrt(c), txt: 'Square Root', cat: 'rooting', color: 't-pow', opId: 'root', opVal: 2 } : null },
-        'double': { fn: (c) => ({ val: c*2, txt: 'Double', cat: 'doubling', color: 't-word', opId: 'mult', opVal: 2 }) },
-        'half':   { fn: (c) => c%2===0 ? ({ val: c/2, txt: 'Half', cat: 'halving', color: 't-word', opId: 'div', opVal: 2 }) : null },
-        'triple': { fn: (c) => ({ val: c*3, txt: 'Triple', cat: 'tripling', color: 't-word', opId: 'mult', opVal: 3 }) },
-        'third':  { fn: (c) => c%3===0 ? ({ val: c/3, txt: 'Third', cat: 'thirding', color: 't-word', opId: 'div', opVal: 3 }) : null },
-        'perc10': { fn: (c) => c%10===0 ? ({ val: c*0.1, txt: '10%', cat: 'perc', color: 't-perc', opId: 'div', opVal: 10 }) : null },
-        'perc25': { fn: (c) => c%4===0 ? ({ val: c*0.25, txt: '25%', cat: 'quartering', color: 't-perc', opId: 'div', opVal: 4 }) : null },
-        'perc50': { fn: (c) => c%2===0 ? ({ val: c*0.5, txt: '50%', cat: 'halving', color: 't-perc', opId: 'div', opVal: 2 }) : null },
-        'add50':  { fn: (c) => c%2===0 ? ({ val: c*1.5, txt: 'Add 50%', cat: 'perc_growth', color: 't-frac', opId: 'growth', opVal: 0.5 }) : null },
-        'sub25':  { fn: (c) => c%4===0 ? ({ val: c*0.75, txt: 'Lose 25%', cat: 'perc_decay', color: 't-frac', opId: 'decay', opVal: 0.25 }) : null },
-        'frac34': { fn: (c) => c%4===0 ? ({ val: (c/4)*3, txt: '¾', cat: 'frac', color: 't-frac', opId: 'complex', opVal: 0.75 }) : null },
+        // --- ADDITION ---
+        'add': { 
+            fn: (c, r, diff) => { 
+                let max = diff === 'hard' ? 50 : 20;
+                let v = Math.floor(r()*max)+1; 
+                let txt = MathEngine.phrase([`+ ${v}`, `Plus ${v}`, `Add ${v}`], r);
+                return { val: c+v, txt: txt, color: 't-add', opId: 'add', opVal: v };
+            } 
+        },
+        
+        // --- SUBTRACTION ---
+        'sub': { 
+            fn: (c, r, diff) => { 
+                let max = diff === 'hard' ? 50 : 15;
+                let v = Math.floor(r()*max)+1; 
+                let txt = MathEngine.phrase([`- ${v}`, `Minus ${v}`, `Subtract ${v}`, `Deduct ${v}`, `Take away ${v}`], r);
+                return { val: c-v, txt: txt, color: 't-sub', opId: 'sub', opVal: v };
+            } 
+        },
+
+        // --- MULTIPLICATION ---
+        'mult': { 
+            fn: (c, r, diff) => { 
+                let max = diff === 'hard' ? 12 : 5;
+                let v = Math.floor(r()*(max-1))+2; 
+                let txt = MathEngine.phrase([`× ${v}`, `Times ${v}`, `Multiply by ${v}`], r);
+                return { val: c*v, txt: txt, color: 't-mult', opId: 'mult', opVal: v };
+            } 
+        },
+
+        // --- DIVISION ---
+        'div': { 
+            fn: (c, r, diff, ban) => { 
+                let divs = []; 
+                let limit = diff === 'hard' ? 20 : 10;
+                for(let i=2; i<=limit; i++) if(c%i===0) divs.push(i);
+                
+                // Ban concepts
+                if(ban.has('halving')) divs = divs.filter(d => d !== 2);
+                if(ban.has('thirding')) divs = divs.filter(d => d !== 3);
+                if(ban.has('quartering')) divs = divs.filter(d => d !== 4);
+                
+                if(divs.length === 0) return null;
+                let v = divs[Math.floor(r()*divs.length)];
+                let txt = MathEngine.phrase([`÷ ${v}`, `Divide by ${v}`], r);
+                return { val: c/v, txt: txt, color: 't-div', opId: 'div', opVal: v };
+            }
+        },
+
+        // --- SPECIALS ---
+        'double': { fn: (c, r) => ({ val: c*2, txt: MathEngine.phrase(['Double it', 'x 2'], r), cat: 'doubling', color: 't-word', opId: 'mult', opVal: 2 }) },
+        
+        'half': { fn: (c, r) => c%2===0 ? ({ val: c/2, txt: MathEngine.phrase(['Half it', 'Half of this', '1/2 of this'], r), cat: 'halving', color: 't-word', opId: 'div', opVal: 2 }) : null },
+        
+        'triple': { fn: (c) => ({ val: c*3, txt: 'Triple it', cat: 'tripling', color: 't-word', opId: 'mult', opVal: 3 }) },
+        
+        'third': { fn: (c) => c%3===0 ? ({ val: c/3, txt: 'Third of this', cat: 'thirding', color: 't-word', opId: 'div', opVal: 3 }) : null },
+
+        'square': { 
+            fn: (c, r) => {
+                if(c > 12) return null;
+                let txt = MathEngine.phrase(['Square it', 'Times by itself', `x ${c}`], r);
+                return { val: c*c, txt: txt, cat: 'squaring', color: 't-pow', opId: 'pow', opVal: 2 };
+            }
+        },
+
+        'sqrt': { 
+            fn: (c) => {
+                let s = Math.sqrt(c);
+                if(!Number.isInteger(s)) return null;
+                return { val: s, txt: 'Square Root', cat: 'rooting', color: 't-pow', opId: 'root', opVal: 2 };
+            }
+        },
+
+        // --- PERCENTAGES ---
+        'perc10': { fn: (c) => c%10===0 ? ({ val: c*0.1, txt: '10% of this', cat: 'perc', color: 't-perc', opId: 'div', opVal: 10 }) : null },
+        'perc20': { fn: (c) => c%5===0 ? ({ val: c*0.2, txt: '20% of this', cat: 'perc', color: 't-perc', opId: 'div', opVal: 5 }) : null },
+        'perc25': { fn: (c) => c%4===0 ? ({ val: c*0.25, txt: '25% of this', cat: 'quartering', color: 't-perc', opId: 'div', opVal: 4 }) : null },
+        'perc50': { fn: (c, r) => c%2===0 ? ({ val: c*0.5, txt: MathEngine.phrase(['50% of this', '50% of it'], r), cat: 'halving', color: 't-perc', opId: 'div', opVal: 2 }) : null },
+        'perc75': { fn: (c) => c%4===0 ? ({ val: (c/4)*3, txt: '75% of it', cat: 'complex_perc', color: 't-perc', opId: 'comp', opVal: 0.75 }) : null },
+        'perc33': { fn: (c) => c%3===0 ? ({ val: c/3, txt: '33 1/3% of this', cat: 'thirding', color: 't-perc', opId: 'div', opVal: 3 }) : null },
+        'less10': { fn: (c) => c%10===0 ? ({ val: c*0.9, txt: 'Less 10%', cat: 'perc_decay', color: 't-frac', opId: 'decay', opVal: 0.9 }) : null },
+
+        // --- FRACTIONS ---
+        'frac14': { fn: (c) => c%4===0 ? ({ val: c/4, txt: '1/4 of this', cat: 'quartering', color: 't-frac', opId: 'div', opVal: 4 }) : null },
+        'frac34': { fn: (c) => c%4===0 ? ({ val: (c/4)*3, txt: '3/4 of this', cat: 'complex_frac', color: 't-frac', opId: 'comp', opVal: 0.75 }) : null },
+        'frac27': { fn: (c) => c%7===0 ? ({ val: (c/7)*2, txt: '2/7 of this', cat: 'complex_frac', color: 't-frac', opId: 'comp', opVal: 2/7 }) : null },
+        'frac47': { fn: (c) => c%7===0 ? ({ val: (c/7)*4, txt: '4/7 of this', cat: 'complex_frac', color: 't-frac', opId: 'comp', opVal: 4/7 }) : null },
+        'frac35': { fn: (c) => c%5===0 ? ({ val: (c/5)*3, txt: '3/5 of this', cat: 'complex_frac', color: 't-frac', opId: 'comp', opVal: 0.6 }) : null },
+        
+        // --- MIXED ---
+        'mult3_13': { fn: (c) => c%3===0 ? ({ val: (c/3)*10, txt: 'x 3 1/3', cat: 'mixed', color: 't-mult', opId: 'mixed', opVal: 10/3 }) : null },
     },
 
     getPool(diff) {
-        let base = ['add', 'sub'];
-        if(diff === 'easy') return [...base, 'double', 'half', 'perc10']; 
-        if(diff === 'medium') return [...base, 'mult', 'div', 'double', 'half', 'square', 'perc50', 'perc25', 'add50'];
-        return [...base, 'mult', 'div', 'square', 'sqrt', 'triple', 'third', 'perc10', 'add50', 'sub25', 'frac34'];
+        // BEGINNER
+        if(diff === 'easy') return ['add', 'sub', 'mult', 'div', 'double', 'half', 'frac14', 'perc50', 'square'];
+        
+        // INTERMEDIATE
+        if(diff === 'medium') return ['add', 'sub', 'mult', 'div', 'double', 'half', 'square', 'sqrt', 'perc10', 'perc20', 'perc25', 'perc50', 'frac34', 'frac47'];
+        
+        // ADVANCED
+        return ['add', 'sub', 'mult', 'div', 'square', 'sqrt', 'triple', 'third', 'perc10', 'perc25', 'perc75', 'perc33', 'less10', 'frac27', 'frac35', 'mult3_13'];
     },
 
     generate(rng, difficulty) {
-        let current = Math.floor(rng() * 20) + 10; 
+        let minStart = difficulty === 'hard' ? 50 : 10;
+        let maxStart = difficulty === 'hard' ? 100 : 30;
+        let current = Math.floor(rng() * (maxStart - minStart)) + minStart;
+        
         let sequence = [{ txt: current, color: 't-start', type: 'start', total: current }];
         
         let bannedConcepts = new Set();
-        let usedOperations = new Set(); 
         let previousStep = null;
-
         const poolKeys = this.getPool(difficulty);
 
         for (let i = 0; i < 9; i++) {
@@ -401,57 +471,62 @@ const MathEngine = {
                 attempts++;
                 const opKey = poolKeys[Math.floor(rng() * poolKeys.length)];
                 
-                let isBanned = false;
-                for(let c in this.concepts) {
-                    if(this.concepts[c].includes(opKey) && bannedConcepts.has(c)) { isBanned = true; break; }
-                }
-                if(isBanned) continue;
+                // Concept Ban Check
+                let opDef = this.ops[opKey];
+                
+                // Check if result has cat and if cat is banned
+                // We actually have to run the function to see if it generates a cat, 
+                // but we can check the key against known lists if needed. 
+                // For now, let's just run it and check later or assume random distribution helps.
 
-                const opDef = this.ops[opKey];
-                const result = opDef.fn(current, rng, bannedConcepts);
+                const result = opDef.fn(current, rng, difficulty, bannedConcepts);
 
                 if (result && Number.isInteger(result.val) && result.val > 0 && result.val < 1000) {
-                    const uniqueKey = `${result.opId}-${result.opVal}`;
-                    if(usedOperations.has(uniqueKey)) continue;
-
+                    
+                    // Prevent Inverse/Repeat Logic
                     if (previousStep) {
                         const prev = previousStep;
                         const curr = result;
-                        if (
-                            (prev.opId === 'add' && curr.opId === 'sub' && prev.opVal === curr.opVal) ||
-                            (prev.opId === 'sub' && curr.opId === 'add' && prev.opVal === curr.opVal) ||
-                            (prev.opId === 'mult' && curr.opId === 'div' && prev.opVal === curr.opVal) ||
-                            (prev.opId === 'div' && curr.opId === 'mult' && prev.opVal === curr.opVal) ||
-                            (prev.opId === 'pow' && curr.opId === 'root') ||
-                            (prev.opId === 'root' && curr.opId === 'pow')
-                        ) continue;
+                        if (prev.opId === curr.opId && prev.opVal === curr.opVal) continue; // Exact repeat
+                        // Simple Inverse Check
+                        if (prev.opId === 'add' && curr.opId === 'sub' && prev.opVal === curr.opVal) continue;
+                        if (prev.opId === 'sub' && curr.opId === 'add' && prev.opVal === curr.opVal) continue;
+                        if (prev.opId === 'mult' && curr.opId === 'div' && prev.opVal === curr.opVal) continue;
+                        if (prev.opId === 'div' && curr.opId === 'mult' && prev.opVal === curr.opVal) continue;
                     }
 
+                    // Check if Concept Banned
+                    if (result.cat && bannedConcepts.has(result.cat)) continue;
+
                     current = result.val;
+                    
+                    // Determine text length class
+                    let lenClass = 'medium';
+                    if (result.txt.length > 10) lenClass = 'long';
+                    if (result.txt.length < 5) lenClass = '';
+
                     sequence.push({ 
                         txt: result.txt, 
                         color: result.color,
-                        long: result.txt.length > 8,
+                        lenClass: lenClass,
                         total: current 
                     });
                     
                     if (result.cat) bannedConcepts.add(result.cat);
-                    for(let c in this.concepts) if(this.concepts[c].includes(opKey)) bannedConcepts.add(c);
-                    
-                    usedOperations.add(uniqueKey);
                     previousStep = result;
                     valid = true;
                 }
             }
             if (!valid) { 
                 current += 1; 
-                sequence.push({ txt: '+ 1', color: 't-add', total: current }); 
+                sequence.push({ txt: '+ 1', color: 't-add', total: current, lenClass: '' }); 
             }
         }
         return { sequence, target: current };
     }
 };
 
+/* --- APP LOGIC --- */
 const Nav = {
     to(id) {
         document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
@@ -526,7 +601,8 @@ const Game = {
         seq.forEach((item, i) => {
             const card = document.createElement('div');
             card.className = `card ${item.color}`;
-            const textClass = item.long ? 'math-text long' : 'math-text';
+            // Use the lenClass generated by MathEngine
+            const textClass = `math-text ${item.lenClass || ''}`;
             card.innerHTML = `
                 <div class="${textClass}">${item.txt}</div>
                 <div class="card-arrow">→</div>
