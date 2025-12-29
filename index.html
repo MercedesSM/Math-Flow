@@ -50,7 +50,20 @@
         .hidden { display: none !important; }
 
         h1 { font-weight: 800; font-size: 2.5rem; margin-bottom: 0.5rem; letter-spacing: -1px; }
-        p { color: #636e72; margin-bottom: 2rem; text-align: center; max-width: 300px; line-height: 1.5; }
+        
+        /* Improved Instructions */
+        .instructions { 
+            color: #636e72; 
+            margin-bottom: 2rem; 
+            text-align: center; 
+            max-width: 320px; 
+            line-height: 1.6; 
+            font-size: 0.95rem;
+            background: #f1f2f6;
+            padding: 15px;
+            border-radius: 15px;
+        }
+        .instructions strong { color: var(--text-main); }
 
         .btn {
             background: var(--text-main);
@@ -112,8 +125,10 @@
             width: 100%;
             background: var(--text-main);
             transform-origin: left;
-            transition: transform 1s linear;
+            transition: transform 1s linear, background-color 0.3s;
         }
+        /* Overtime Color */
+        #timer-bar.overtime { background-color: var(--c-sub) !important; }
 
         .carousel-wrapper {
             flex-grow: 1;
@@ -125,7 +140,6 @@
             position: relative;
         }
 
-        /* --- CAROUSEL LOGIC --- */
         .carousel {
             display: flex;
             overflow-x: auto;
@@ -135,17 +149,13 @@
             align-items: center;
             scrollbar-width: none; 
             -ms-overflow-style: none;
-            
-            /* MOBILE DEFAULT: Card is 60vw, so padding is 20vw each side to center it */
             padding: 0 20vw; 
         }
         .carousel::-webkit-scrollbar { display: none; }
 
         .card {
-            /* MOBILE DEFAULT */
             flex: 0 0 60vw; 
             height: 60vw;
-            
             background: white;
             border-radius: 25px;
             margin: 0 15px; 
@@ -164,21 +174,9 @@
         .math-text { font-size: 15vw; font-weight: 800; text-align: center; line-height: 1.1; }
         .math-text.long { font-size: 8vw; }
         
-        /* --- DESKTOP FIX --- 
-           When screen is larger than mobile (600px+), we clamp the card to 350px.
-           We must recalculate padding so the 350px card stays exactly in the center.
-           Formula: Padding = (100% - CardWidth) / 2 
-        */
         @media (min-width: 600px) {
-            .carousel {
-                /* (100vw - 350px) / 2 = Center Alignment */
-                padding: 0 calc(50% - 175px); 
-            }
-            .card {
-                flex: 0 0 350px;
-                height: 350px;
-                width: 350px;
-            }
+            .carousel { padding: 0 calc(50% - 175px); }
+            .card { flex: 0 0 350px; height: 350px; width: 350px; }
             .math-text { font-size: 4rem; }
             .math-text.long { font-size: 2.5rem; }
         }
@@ -196,17 +194,25 @@
         .t-word  { color: var(--c-word);  border-color: var(--c-word); }
         .t-pow   { color: var(--c-pow);   border-color: var(--c-pow); }
         
+        /* Input Area */
         .input-container {
             width: 100%;
-            padding: 15px 20px 30px 20px;
+            padding: 15px 20px 20px 20px;
             background: var(--bg-color);
             z-index: 60;
             display: flex;
-            flex-direction: row;
-            justify-content: center;
+            flex-direction: column; /* Column to hold input and give up btn */
+            align-items: center;
             gap: 10px;
             border-top: 1px solid #f1f2f6;
             flex-shrink: 0;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
         }
 
         input[type="number"] {
@@ -223,6 +229,15 @@
             background: #f9f9f9;
         }
         input:focus { border-color: var(--text-main); background: #fff; }
+        
+        /* Shake Animation */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
 
         .btn-submit {
             background: var(--text-main);
@@ -234,16 +249,49 @@
             padding: 0 25px;
             cursor: pointer;
         }
+        
+        .btn-giveup {
+            background: transparent;
+            color: #b2bec3;
+            border: none;
+            font-size: 0.8rem;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 5px;
+        }
 
-        .stat-number { font-size: 4rem; font-weight: 800; margin: 10px 0; }
+        /* Results Screen Styling */
+        .stat-number { font-size: 3rem; font-weight: 800; margin: 10px 0; }
+        
+        #breakdown-container {
+            width: 100%;
+            max-width: 400px;
+            max-height: 40vh;
+            overflow-y: auto;
+            margin: 20px 0;
+            padding: 0 20px;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f9f9f9;
+            font-size: 0.9rem;
+            color: #636e72;
+        }
+        .breakdown-row.total {
+            color: var(--text-main);
+            font-weight: bold;
+        }
+        .breakdown-op { font-weight: bold; }
 
-        /* Keyboard Height Fix */
         @media (max-height: 500px) {
-            .carousel-wrapper { min-height: 200px; }
-            /* Force smaller cards on landscape/keyboard open */
-            .card { height: 180px !important; width: 180px !important; flex: 0 0 180px !important; }
-            .carousel { padding: 0 calc(50% - 90px); } /* Recalc center for small card */
-            .math-text { font-size: 3rem; }
+            .carousel-wrapper { min-height: 150px; }
+            .card { height: 160px !important; width: 160px !important; flex: 0 0 160px !important; }
+            .carousel { padding: 0 calc(50% - 80px); } 
         }
 
     </style>
@@ -251,8 +299,15 @@
 <body>
 
     <div id="screen-home" class="screen">
-        <h1>MATH FLOW</h1>
-        <p>Complete the sequence in your head.<br>Integers only.</p>
+        <h1>30s MATH</h1>
+        <div class="instructions">
+            <strong>How to Play:</strong><br>
+            1. Start with the first number.<br>
+            2. <strong>Swipe Left</strong> to reveal the next operation.<br>
+            3. Keep the running total in your head.<br>
+            4. Enter the final number at the end.<br>
+            <em>Tip: Use the peek at the edges to prepare!</em>
+        </div>
         <button class="btn" onclick="Game.init('daily')">Daily Challenge</button>
         <button class="btn btn-outline" onclick="Nav.to('screen-practice')">Practice Mode</button>
     </div>
@@ -277,8 +332,11 @@
         </div>
 
         <div class="input-container">
-            <input type="number" id="answer-input" placeholder="?" inputmode="numeric" enterkeyhint="done">
-            <button class="btn-submit" onclick="Game.check()">Submit</button>
+            <div class="input-row">
+                <input type="number" id="answer-input" placeholder="?" inputmode="numeric" enterkeyhint="done">
+                <button class="btn-submit" onclick="Game.checkAttempt()">Submit</button>
+            </div>
+            <button class="btn-giveup" onclick="Game.endGame(false, true)">Give Up / Show Answer</button>
         </div>
     </div>
 
@@ -286,6 +344,9 @@
         <h2 id="res-title">RESULT</h2>
         <div id="res-time" class="stat-number">0.0s</div>
         <p id="res-msg"></p>
+        
+        <div id="breakdown-container"></div>
+
         <button id="btn-share" class="btn" onclick="Game.share()">Share Result</button>
         <button class="btn btn-outline" onclick="Nav.to('screen-home')">Home</button>
     </div>
@@ -341,7 +402,8 @@ const MathEngine = {
 
     generate(rng, difficulty) {
         let current = Math.floor(rng() * 20) + 10; 
-        let sequence = [{ txt: current, color: 't-start', type: 'start' }];
+        // We track the running total in the sequence for the breakdown view
+        let sequence = [{ txt: current, color: 't-start', type: 'start', total: current }];
         
         let bannedConcepts = new Set();
         let usedOperations = new Set(); 
@@ -387,7 +449,8 @@ const MathEngine = {
                     sequence.push({ 
                         txt: result.txt, 
                         color: result.color,
-                        long: result.txt.length > 8 
+                        long: result.txt.length > 8,
+                        total: current // STORE THE ANSWER FOR THIS STEP
                     });
                     
                     if (result.cat) bannedConcepts.add(result.cat);
@@ -398,7 +461,10 @@ const MathEngine = {
                     valid = true;
                 }
             }
-            if (!valid) { current += 1; sequence.push({ txt: '+ 1', color: 't-add' }); }
+            if (!valid) { 
+                current += 1; 
+                sequence.push({ txt: '+ 1', color: 't-add', total: current }); 
+            }
         }
         return { sequence, target: current };
     }
@@ -415,6 +481,8 @@ const Nav = {
 const Game = {
     data: null,
     startTime: 0,
+    attempts: 0,
+    redTimerTimeout: null,
     
     init(mode, diff = 'medium') {
         let rng;
@@ -428,11 +496,11 @@ const Game = {
 
         const result = MathEngine.generate(rng, diff);
         this.data = result;
+        this.attempts = 0;
         
         this.renderCarousel(result.sequence);
         Nav.to('screen-game');
 
-        // FORCE SCROLL RESET with slight delay to ensure render
         setTimeout(() => {
             const c = document.getElementById('carousel');
             c.scrollLeft = 0;
@@ -441,15 +509,22 @@ const Game = {
 
         const inp = document.getElementById('answer-input');
         inp.value = '';
+        inp.classList.remove('shake');
         
         this.startTimer();
     },
 
     exit() {
+        this.clearTimer();
+        Nav.to('screen-home');
+    },
+
+    clearTimer() {
+        if(this.redTimerTimeout) clearTimeout(this.redTimerTimeout);
         const bar = document.getElementById('timer-bar');
         bar.style.transition = 'none';
         bar.style.transform = 'scaleX(1)';
-        Nav.to('screen-home');
+        bar.classList.remove('overtime');
     },
 
     createSeeder(str) {
@@ -484,24 +559,18 @@ const Game = {
         const c = document.getElementById('carousel');
         const center = c.scrollLeft + (c.offsetWidth / 2);
         const cards = c.querySelectorAll('.card');
-        
         cards.forEach(card => {
             const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
             const dist = Math.abs(center - cardCenter);
-            // Dynamic Max Distance based on card width (works for both mobile and desktop)
             const maxDist = card.offsetWidth; 
             
-            let scale = 0.8; 
-            let opacity = 0.4; 
-            let zIndex = 1;
-
+            let scale = 0.8; let opacity = 0.4; let zIndex = 1;
             if (dist < maxDist) {
                 const ratio = 1 - (dist / maxDist);
-                scale = 0.8 + (ratio * 0.3); // Scales up to 1.1
+                scale = 0.8 + (ratio * 0.3); 
                 opacity = 0.4 + (ratio * 0.6); 
                 if (ratio > 0.8) zIndex = 10; 
             }
-
             card.style.transform = `scale(${scale})`;
             card.style.opacity = opacity;
             card.style.zIndex = zIndex;
@@ -509,46 +578,104 @@ const Game = {
     },
 
     startTimer() {
+        this.clearTimer();
         const bar = document.getElementById('timer-bar');
-        bar.style.transition = 'none';
-        bar.style.transform = 'scaleX(1)';
-        void bar.offsetWidth;
+        void bar.offsetWidth; // force reflow
+        
+        // Start animation
         setTimeout(() => {
             bar.style.transition = 'transform 30s linear';
             bar.style.transform = 'scaleX(0)';
         }, 50);
+
+        // Schedule Red Color at exactly 30s
+        this.redTimerTimeout = setTimeout(() => {
+            bar.classList.add('overtime');
+        }, 30050);
+
         this.startTime = Date.now();
     },
 
-    check() {
-        const val = parseInt(document.getElementById('answer-input').value);
-        const time = ((Date.now() - this.startTime) / 1000).toFixed(1);
-        const isCorrect = val === this.data.target;
+    checkAttempt() {
+        const inputEl = document.getElementById('answer-input');
+        const val = parseInt(inputEl.value);
+        
+        if (isNaN(val)) return;
 
+        if (val === this.data.target) {
+            this.endGame(true, false);
+        } else {
+            this.attempts++;
+            // Shake effect
+            inputEl.classList.remove('shake');
+            void inputEl.offsetWidth; // force reflow
+            inputEl.classList.add('shake');
+            inputEl.value = '';
+            inputEl.placeholder = `Try again (${3-this.attempts})`;
+
+            if (this.attempts >= 3) {
+                this.endGame(false, false);
+            }
+        }
+    },
+
+    endGame(isSuccess, gaveUp) {
+        this.clearTimer();
+        const elapsed = (Date.now() - this.startTime) / 1000;
+        
         const title = document.getElementById('res-title');
         const num = document.getElementById('res-time');
         const msg = document.getElementById('res-msg');
 
-        if (isCorrect) {
-            title.innerText = "SUCCESS";
-            title.style.color = "var(--c-add)";
-            num.innerText = time + 's';
-            msg.innerText = "Spot on!";
+        // Logic for success vs slow vs fail
+        if (isSuccess) {
+            if (elapsed <= 30) {
+                title.innerText = "SPOT ON!";
+                title.style.color = "var(--c-add)";
+                msg.innerText = "Great speed!";
+            } else {
+                title.innerText = "SPOT ON";
+                title.style.color = "var(--c-div)"; // Orangeish
+                msg.innerText = "But too slow (>30s)";
+            }
+            num.innerText = elapsed.toFixed(1) + 's';
         } else {
-            title.innerText = "MISSED";
+            title.innerText = gaveUp ? "GAVE UP" : "FAILED";
             title.style.color = "var(--c-sub)";
             num.innerText = "---";
-            msg.innerText = `Correct answer: ${this.data.target}`;
+            msg.innerText = `Correct answer was ${this.data.target}`;
         }
-        
-        this.lastResult = { isCorrect, time };
+
+        this.renderBreakdown();
+        this.lastResult = { isSuccess, time: elapsed.toFixed(1) };
         Nav.to('screen-result');
+    },
+
+    renderBreakdown() {
+        const container = document.getElementById('breakdown-container');
+        container.innerHTML = '';
+        
+        this.data.sequence.forEach((step, i) => {
+            const row = document.createElement('div');
+            row.className = 'breakdown-row';
+            
+            let label = i === 0 ? "Start" : `Step ${i}`;
+            let op = step.txt;
+            let res = step.total;
+
+            row.innerHTML = `
+                <span>${label}: <span class="breakdown-op">${op}</span></span>
+                <span class="breakdown-total">= ${res}</span>
+            `;
+            container.appendChild(row);
+        });
     },
 
     async share() {
         const r = this.lastResult;
-        const icon = r.isCorrect ? '✅' : '❌';
-        const txt = `30s Math Challenge\n${icon} ${r.time}s\nBeat this!`;
+        const icon = r.isSuccess ? '✅' : '❌';
+        const date = new Date().toLocaleDateString();
+        const txt = `30s Math Challenge (${date})\n${icon} ${r.time}s\nBeat this!`;
         try {
             await navigator.clipboard.writeText(txt);
             document.getElementById('btn-share').innerText = 'Copied!';
@@ -556,9 +683,8 @@ const Game = {
     }
 };
 
-// Enter key support
 document.getElementById('answer-input').addEventListener('keypress', (e) => {
-    if(e.key === 'Enter') Game.check();
+    if(e.key === 'Enter') Game.checkAttempt();
 });
 
 </script>
